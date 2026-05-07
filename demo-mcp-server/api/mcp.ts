@@ -11,7 +11,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         parseFloat(process.env.PRICE_USDC ?? "0.001")
       );
     } catch (e) {
-      res.status(500).send(`Server misconfigured: ${(e as Error).message}`);
+      console.error("[payclaw] Gate initialization failed:", e);
+      res.status(500).json({ error: "Internal server error" });
       return;
     }
   }
@@ -24,7 +25,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     req.on("error", reject);
   });
 
-  const webReq = new Request(`https://${req.headers.host}${req.url}`, {
+  const safeBase = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "https://localhost";
+  const webReq = new Request(`${safeBase}${req.url}`, {
     method: req.method,
     headers: req.headers as Record<string, string>,
     body: body || undefined,

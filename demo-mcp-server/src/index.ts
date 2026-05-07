@@ -15,7 +15,8 @@ export default {
       try {
         gate = createGate(env.WALLET_ADDRESS, parseFloat(env.PRICE_USDC || "0.001"));
       } catch (e) {
-        return new Response(`Server misconfigured: ${(e as Error).message}`, { status: 500 });
+        console.error("[payclaw] Gate initialization failed:", e);
+        return Response.json({ error: "Internal server error" }, { status: 500 });
       }
     }
     return handleMcp(req, gate, parseFloat(env.PRICE_USDC || "0.001"));
