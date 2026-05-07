@@ -105,6 +105,50 @@ if not allowed:
 
 ---
 
+## Getting testnet USDC
+
+Get free testnet USDC from the [Circle faucet](https://faucet.circle.com) — select **Base Sepolia** and paste your wallet address.
+
+---
+
+## Containerized deployments
+
+The nonce cache is a SQLite file (default: `.payclaw_nonces.db`). In Docker or serverless environments where the filesystem is ephemeral, **mount a persistent volume** or point `nonce_db_path` to a mounted path:
+
+```python
+config = PayclawConfig(
+    price_usdc=0.001,
+    wallet_address="0xYourWallet",
+    nonce_db_path="/data/payclaw_nonces.db",  # mounted volume
+)
+```
+
+Without persistence, a container restart clears the nonce cache and allows replay attacks within the `freshness_seconds` window.
+
+---
+
+## Async frameworks (FastAPI)
+
+The `verify_payment` function uses synchronous HTTP (`requests`). In an async FastAPI app, this blocks the event loop during RPC calls. For high-throughput deployments, wrap with `asyncio.to_thread`:
+
+```python
+import asyncio
+from payclaw import PayclawMiddleware, PayclawConfig
+
+middleware = PayclawMiddleware(config)
+
+@app.post("/tool")
+async def my_tool(request: Request):
+    headers = dict(request.headers)
+    allowed, reason = await asyncio.to_thread(middleware.check, headers)
+    if not allowed:
+        _, body = middleware.payment_required(reason)
+        return JSONResponse(status_code=402, content=body)
+    return {"result": "..."}
+```
+
+---
+
 ## Security
 
 - **Replay protection**: SQLite nonce cache survives process restarts. Atomic INSERT OR IGNORE prevents race conditions.
