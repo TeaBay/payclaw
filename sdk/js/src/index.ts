@@ -100,7 +100,7 @@ export function requirePayment(config: PayclawConfig) {
     if (!txHash) {
       return res.status(402).json(build402(cfg, "missing X-Payment header"));
     }
-    if (!txHash.startsWith("0x") || txHash.length !== 66) {
+    if (!txHash.startsWith("0x") || txHash.length !== 66 || !/^0x[0-9a-fA-F]{64}$/.test(txHash)) {
       return res.status(402).json(build402(cfg, "invalid tx hash format"));
     }
     const result = await verifyPayment(txHash, cfg);

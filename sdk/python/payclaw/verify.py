@@ -54,6 +54,10 @@ def verify_payment(tx_hash: str, config, nonce_cache) -> tuple[bool, str]:
     if receipt is None:
         return False, "tx receipt not found"
 
+    # Reject reverted transactions — logs are stripped on revert in EVM, but check anyway
+    if receipt.get("status") != "0x1":
+        return False, "tx reverted (status != 0x1)"
+
     usdc_log = None
     for log in receipt.get("logs", []):
         topics = log.get("topics", [])

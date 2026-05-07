@@ -44,9 +44,15 @@ export async function verifyPayment(txHash: string, config: ResolvedConfig): Pro
 
   // USDC is ERC-20 — amount is in Transfer event logs, not tx.value (which is 0).
   const receipt = (await rpc(config.rpcUrl, "eth_getTransactionReceipt", [txHash])) as {
+    status: string;
     logs: Array<{ address: string; topics: string[]; data: string }>;
   } | null;
   if (!receipt) return { ok: false, reason: "tx receipt not found" };
+
+  // Reject reverted transactions — logs are stripped on revert in EVM, but check anyway
+  if (receipt.status !== "0x1") {
+    return { ok: false, reason: "tx reverted (status != 0x1)" };
+  }
 
   const usdcLog = receipt.logs.find(
     (log) =>

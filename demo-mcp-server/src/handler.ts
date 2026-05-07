@@ -51,11 +51,21 @@ function rpcErr(id: string | number | null, code: number, message: string): Json
   return { jsonrpc: "2.0", id, error: { code, message } };
 }
 
-export async function handleMcp(
-  req: Request,
-  walletAddress: string,
-  priceUsdc: number
-): Promise<Response> {
+export type PaymentGate = ReturnType<typeof requirePayment>;
+
+/**
+ * Create the payment gate once at startup (module level in your entry point).
+ * Never call this inside a request handler — the nonce store must persist across requests.
+ */
+export function createGate(walletAddress: string, priceUsdc: number): PaymentGate {
+  if (!walletAddress || !walletAddress.startsWith("0x")) {
+    throw new Error("WALLET_ADDRESS is not set or invalid. Set it as an environment variable.");
+  }
+  const config: PayclawConfig = { priceUsdc, walletAddress };
+  return requirePayment(config);
+}
+
+export async function handleMcp(req: Request, gate: PaymentGate, priceUsdc: number): Promise<Response> {
   if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
 
   let rpc: JsonRpcRequest;
@@ -84,9 +94,6 @@ export async function handleMcp(
   }
 
   if (rpc.method === "tools/call") {
-    const config: PayclawConfig = { priceUsdc, walletAddress };
-    const gate = requirePayment(config);
-
     return gate.wrapFetch(async () => {
       const params = rpc.params as { name?: string; arguments?: { query?: string } };
       if (params?.name !== "search_knowledge") {

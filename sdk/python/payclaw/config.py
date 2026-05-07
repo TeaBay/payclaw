@@ -25,6 +25,8 @@ class PayclawConfig:
             raise ValueError(f"Invalid wallet_address: {self.wallet_address!r}")
         if self.price_usdc <= 0:
             raise ValueError("price_usdc must be > 0")
+        if self.nonce_cache_ttl < self.freshness_seconds:
+            raise ValueError("nonce_cache_ttl must be >= freshness_seconds")
 
     @property
     def price_units(self) -> int:

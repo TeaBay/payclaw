@@ -1,13 +1,23 @@
 // Cloudflare Workers entry point
-import { handleMcp } from "./handler.js";
+import { handleMcp, createGate } from "./handler.js";
 
 export interface Env {
   WALLET_ADDRESS: string;
   PRICE_USDC: string;
 }
 
+// Gate is created once per worker instance — nonce store persists across requests
+let gate: ReturnType<typeof createGate> | null = null;
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
-    return handleMcp(req, env.WALLET_ADDRESS, parseFloat(env.PRICE_USDC || "0.001"));
+    if (!gate) {
+      try {
+        gate = createGate(env.WALLET_ADDRESS, parseFloat(env.PRICE_USDC || "0.001"));
+      } catch (e) {
+        return new Response(`Server misconfigured: ${(e as Error).message}`, { status: 500 });
+      }
+    }
+    return handleMcp(req, gate, parseFloat(env.PRICE_USDC || "0.001"));
   },
 };
