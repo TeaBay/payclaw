@@ -7,7 +7,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!gate) {
     try {
       gate = createGate(
-        process.env.WALLET_ADDRESS ?? "",
+        (process.env.WALLET_ADDRESS ?? "").trim(),
         parseFloat(process.env.PRICE_USDC ?? "0.001")
       );
     } catch (e) {
