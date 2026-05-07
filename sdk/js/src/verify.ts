@@ -7,17 +7,22 @@ async function rpc(url: string, method: string, params: unknown[], retries = 3):
   let delay = 1000;
   let lastErr: unknown;
   for (let i = 0; i < retries; i++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
     try {
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+        signal: controller.signal,
       });
+      clearTimeout(timer);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { result?: unknown; error?: unknown };
       if (data.error) throw new Error(`RPC error: ${JSON.stringify(data.error)}`);
       return data.result ?? null;
     } catch (e) {
+      clearTimeout(timer);
       lastErr = e;
       if (i < retries - 1) await sleep(delay);
       delay *= 2;
@@ -39,6 +44,12 @@ export async function verifyPayment(txHash: string, config: ResolvedConfig): Pro
     return { ok: false, reason: "tx already used" };
   }
 
+  // Verify we're on the correct chain to prevent testnet replay attacks
+  const chainIdHex = await rpc(config.rpcUrl, "eth_chainId", []) as string;
+  if (Number(BigInt(chainIdHex)) !== config.chainId) {
+    return { ok: false, reason: `chain mismatch: expected ${config.chainId}, got ${Number(BigInt(chainIdHex))}` };
+  }
+
   const tx = (await rpc(config.rpcUrl, "eth_getTransactionByHash", [txHash])) as Record<string, string> | null;
   if (!tx) return { ok: false, reason: "tx not found" };
 
@@ -49,7 +60,7 @@ export async function verifyPayment(txHash: string, config: ResolvedConfig): Pro
   } | null;
   if (!receipt) return { ok: false, reason: "tx receipt not found" };
 
-  // Reject reverted transactions — logs are stripped on revert in EVM, but check anyway
+  // Reject reverted transactions
   if (receipt.status !== "0x1") {
     return { ok: false, reason: "tx reverted (status != 0x1)" };
   }
@@ -64,7 +75,13 @@ export async function verifyPayment(txHash: string, config: ResolvedConfig): Pro
 
   if (!usdcLog) return { ok: false, reason: "no USDC transfer to recipient found in tx" };
 
-  const value = BigInt(usdcLog.data);
+  let value: bigint;
+  try {
+    value = BigInt(usdcLog.data);
+  } catch {
+    return { ok: false, reason: "malformed transfer amount in log data" };
+  }
+
   if (value < config.priceUnits) {
     return { ok: false, reason: `insufficient USDC: got ${value} units, need ${config.priceUnits}` };
   }

@@ -3,6 +3,9 @@ import { handleMcp, createGate } from "../src/handler.js";
 
 let gate: ReturnType<typeof createGate> | null = null;
 const priceUsdc = parseFloat(process.env.PRICE_USDC ?? "0.001");
+if (!Number.isFinite(priceUsdc) || priceUsdc <= 0) {
+  throw new Error("PRICE_USDC must be a positive number");
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!gate) {
