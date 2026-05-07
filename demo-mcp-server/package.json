@@ -16,5 +16,8 @@
     "@vercel/node": "^5.0.0",
     "typescript": "^5.0.0",
     "wrangler": "^3.0.0"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.38.0"
   }
 }

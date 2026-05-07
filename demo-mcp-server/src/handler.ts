@@ -1,5 +1,26 @@
+import { Redis } from "@upstash/redis";
 import { requirePayment } from "./payclaw/index.js";
-import type { PayclawConfig } from "./payclaw/index.js";
+import type { PayclawConfig, NonceStore } from "./payclaw/index.js";
+
+function createRedisNonceStore(): NonceStore | null {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return null;
+  }
+  const redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+  });
+  return {
+    async has(txHash) {
+      return (await redis.get(txHash.toLowerCase())) !== null;
+    },
+    async set(txHash, ttlSeconds) {
+      const key = txHash.toLowerCase();
+      const result = await redis.set(key, "1", { ex: ttlSeconds, nx: true });
+      return result === "OK";
+    },
+  };
+}
 
 interface JsonRpcRequest {
   jsonrpc: "2.0";
@@ -57,11 +78,24 @@ export type PaymentGate = ReturnType<typeof requirePayment>;
  * Create the payment gate once at startup (module level in your entry point).
  * Never call this inside a request handler — the nonce store must persist across requests.
  */
+const MAINNET_CONFIG = {
+  network: "base",
+  chainId: 8453,
+  usdcAddress: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  rpcUrl: "https://mainnet.base.org",
+} as const;
+
 export function createGate(walletAddress: string, priceUsdc: number): PaymentGate {
   if (!walletAddress || !walletAddress.startsWith("0x")) {
     throw new Error("WALLET_ADDRESS is not set or invalid. Set it as an environment variable.");
   }
-  const config: PayclawConfig = { priceUsdc, walletAddress };
+  const nonceStore = createRedisNonceStore();
+  const config: PayclawConfig = {
+    priceUsdc,
+    walletAddress,
+    ...MAINNET_CONFIG,
+    ...(nonceStore ? { nonceStore } : {}),
+  };
   return requirePayment(config);
 }
 
