@@ -15,9 +15,15 @@ function toUnits(priceUsdc: number): bigint {
 
 function createRateLimiter(maxRequests: number, windowMs: number) {
   const log = new Map<string, number[]>();
+  let sweepCounter = 0;
   return function isAllowed(ip: string): boolean {
     const now = Date.now();
     const cutoff = now - windowMs;
+    if (++sweepCounter % 500 === 0) {
+      for (const [k, ts] of log) {
+        if (!ts.some((t) => t > cutoff)) log.delete(k);
+      }
+    }
     const times = (log.get(ip) ?? []).filter((t) => t > cutoff);
     if (times.length >= maxRequests) {
       log.set(ip, times);
@@ -63,6 +69,11 @@ function resolve(config: PayclawConfig): ResolvedConfig {
   if (config.priceUsdc <= 0) throw new Error("priceUsdc must be > 0");
   const rpcUrl = config.rpcUrl ?? RPC_BASE_SEPOLIA;
   if (!rpcUrl.startsWith("https://")) throw new Error("rpcUrl must use HTTPS");
+  const freshnessSeconds = config.freshnessSeconds ?? 300;
+  const nonceCacheTtl = config.nonceCacheTtl ?? 600;
+  if (nonceCacheTtl < freshnessSeconds) {
+    throw new Error(`nonceCacheTtl (${nonceCacheTtl}s) must be >= freshnessSeconds (${freshnessSeconds}s)`);
+  }
   return {
     priceUsdc: config.priceUsdc,
     priceUnits: toUnits(config.priceUsdc),
@@ -71,8 +82,8 @@ function resolve(config: PayclawConfig): ResolvedConfig {
     chainId: config.chainId ?? 84532,
     usdcAddress: config.usdcAddress ?? USDC_BASE_SEPOLIA,
     rpcUrl,
-    freshnessSeconds: config.freshnessSeconds ?? 300,
-    nonceCacheTtl: config.nonceCacheTtl ?? 600,
+    freshnessSeconds,
+    nonceCacheTtl,
     nonceStore: config.nonceStore ?? createMemoryNonceStore(),
   };
 }
@@ -120,7 +131,7 @@ export function requirePayment(config: PayclawConfig) {
   ): (req: Request, ...rest: unknown[]) => Promise<Response> {
     return async (req, ...rest) => {
       if (checkRate && !checkRate(clientIp(req.headers, trustProxy))) {
-        return Response.json(build402(cfg, "rate limit exceeded"), { status: 429 });
+        return Response.json({ error: "Too Many Requests", reason: "rate limit exceeded" }, { status: 429 });
       }
       const txHash = req.headers.get("x-payment");
       if (!txHash) {
@@ -143,7 +154,7 @@ export function requirePayment(config: PayclawConfig) {
       ? ((req.headers["x-forwarded-for"] as string)?.split(",")[0].trim() ?? "unknown")
       : "unknown";
     if (checkRate && !checkRate(ip)) {
-      return res.status(429).json(build402(cfg, "rate limit exceeded"));
+      return res.status(429).json({ error: "Too Many Requests", reason: "rate limit exceeded" });
     }
     const txHash: string | undefined =
       req.headers?.["x-payment"] ?? req.header?.("x-payment");

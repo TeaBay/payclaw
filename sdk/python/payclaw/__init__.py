@@ -10,7 +10,7 @@ Usage:
     )
 
     @require_payment(config)
-    async def my_mcp_tool(params):
+    async def my_mcp_tool(request: Request):
         return {"result": "tool output"}
 """
 

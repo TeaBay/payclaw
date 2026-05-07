@@ -16,7 +16,7 @@ fastapi = ["fastapi>=0.100"]
 flask = ["flask>=2.3"]
 
 [project.urls]
-Homepage = "https://github.com/your-org/payclaw"
+Homepage = "https://github.com/TeaBay/payclaw"
 
 [tool.setuptools.packages.find]
 where = ["."]

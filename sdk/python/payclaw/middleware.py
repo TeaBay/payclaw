@@ -20,11 +20,17 @@ class _RateLimiter:
         self._window = window_seconds
         self._lock = threading.Lock()
         self._log: dict[str, list[float]] = defaultdict(list)
+        self._calls = 0
 
     def is_allowed(self, key: str) -> bool:
         now = time.monotonic()
         cutoff = now - self._window
         with self._lock:
+            self._calls += 1
+            if self._calls % 500 == 0:
+                stale = [k for k, ts in self._log.items() if not any(t > cutoff for t in ts)]
+                for k in stale:
+                    del self._log[k]
             fresh = [t for t in self._log.get(key, []) if t > cutoff]
             if len(fresh) >= self._max:
                 self._log[key] = fresh
