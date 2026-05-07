@@ -192,6 +192,8 @@ Get free testnet USDC from the [Circle faucet](https://faucet.circle.com) — se
 
 MIT License. Compliance with sanctions (OFAC) and applicable regulations is the responsibility of the deploying party.
 
+payclaw is infrastructure software only. It is not a payment processor, money transmitter, or financial service. It does not custody funds. IP addresses may be temporarily stored for rate limiting purposes only. Use at your own risk.
+
 ---
 
 <a name="繁體中文"></a>
@@ -383,3 +385,5 @@ const gate = requirePayment({
 ## 法律聲明
 
 MIT 授權。遵守制裁（OFAC）及相關法規是部署方的責任。
+
+payclaw 僅為基礎設施軟體，並非支付處理器、貨幣傳輸業者或金融服務。本軟體不持有任何資金。IP 位址僅可能因頻率限制目的而暫時儲存。使用風險由使用者自行承擔。
