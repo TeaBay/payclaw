@@ -112,7 +112,7 @@ export async function handleMcp(req: Request, gate: PaymentGate, priceUsdc: numb
     return json(ok(id, {
       protocolVersion: "2024-11-05",
       capabilities: { tools: {} },
-      serverInfo: { name: "payclaw-demo", version: "0.1.1" },
+      serverInfo: { name: "payclaw-search", version: "0.1.1" },
     }));
   }
 

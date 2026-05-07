@@ -67,7 +67,7 @@ export default { fetch: gate.wrapFetch(async (req) => {
 |---------|---------|------|
 | Python SDK | `pip install payclaw` | [sdk/python](sdk/python/) |
 | JavaScript SDK | `npm install payclaw-x402` | [sdk/js](sdk/js/) |
-| Demo MCP Server | — | [demo-mcp-server](demo-mcp-server/) |
+| payclaw Search MCP | — | [demo-mcp-server](demo-mcp-server/) |
 
 **Live demo:** `https://payclaw-mcp.vercel.app/api/mcp`
 
@@ -184,7 +184,7 @@ export default { fetch: gate.wrapFetch(async (req) => {
 |------|------|------|
 | Python SDK | `pip install payclaw` | [sdk/python](sdk/python/) |
 | JavaScript SDK | `npm install payclaw-x402` | [sdk/js](sdk/js/) |
-| 示範 MCP 伺服器 | — | [demo-mcp-server](demo-mcp-server/) |
+| payclaw Search MCP | — | [demo-mcp-server](demo-mcp-server/) |
 
 **線上示範：** `https://payclaw-mcp.vercel.app/api/mcp`
 

@@ -1,4 +1,4 @@
-# payclaw demo MCP server
+# payclaw Search MCP Server
 
 [English](#english) | [繁體中文](#繁體中文)
 
@@ -94,7 +94,7 @@ Want to add x402 payments to your own MCP server? Use the payclaw SDK:
 
 <a name="繁體中文"></a>
 
-# payclaw 示範 MCP 伺服器（繁體中文）
+# payclaw Search MCP 伺服器（繁體中文）
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F01XSFJ0)
 
