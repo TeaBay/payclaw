@@ -69,7 +69,7 @@ export default { fetch: gate.wrapFetch(async (req) => {
 | JavaScript SDK | `npm install payclaw-x402` | [sdk/js](sdk/js/) |
 | payclaw Search MCP | — | [demo-mcp-server](demo-mcp-server/) |
 
-**Live demo:** `https://payclaw-mcp.vercel.app/api/mcp`
+**Live endpoint:** `https://payclaw-mcp.vercel.app/api/mcp`
 
 Connect with Claude Desktop:
 ```json
@@ -186,7 +186,7 @@ export default { fetch: gate.wrapFetch(async (req) => {
 | JavaScript SDK | `npm install payclaw-x402` | [sdk/js](sdk/js/) |
 | payclaw Search MCP | — | [demo-mcp-server](demo-mcp-server/) |
 
-**線上示範：** `https://payclaw-mcp.vercel.app/api/mcp`
+**線上端點：** `https://payclaw-mcp.vercel.app/api/mcp`
 
 ---
 
