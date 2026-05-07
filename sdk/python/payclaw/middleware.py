@@ -91,6 +91,11 @@ class PayclawMiddleware:
     def payment_required(self, reason: str = "") -> tuple[int, dict]:
         return 402, _build_402(self.config, reason)
 
+    def response_for(self, reason: str) -> tuple[int, dict]:
+        if reason == "rate limit exceeded":
+            return 429, {"error": "Too Many Requests", "reason": reason}
+        return self.payment_required(reason)
+
     def _client_ip(self, headers: dict) -> str:
         if self.config.trust_proxy:
             forwarded = headers.get("X-Forwarded-For") or headers.get("x-forwarded-for", "")
@@ -129,7 +134,7 @@ def require_payment(config: PayclawConfig):
                 headers = _extract_headers(args, kwargs)
                 allowed, reason = middleware.check(headers)
                 if not allowed:
-                    status, body = middleware.payment_required(reason)
+                    status, body = middleware.response_for(reason)
                     return _fastapi_response(status, body)
                 return await func(*args, **kwargs)
             return async_wrapper
@@ -139,7 +144,7 @@ def require_payment(config: PayclawConfig):
                 headers = _flask_headers()
                 allowed, reason = middleware.check(headers)
                 if not allowed:
-                    status, body = middleware.payment_required(reason)
+                    status, body = middleware.response_for(reason)
                     return _flask_response(status, body)
                 return func(*args, **kwargs)
             return sync_wrapper
