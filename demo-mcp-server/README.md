@@ -28,7 +28,7 @@ Install [mcp-remote](https://github.com/geelen/mcp-remote), then add to your Cla
 ```json
 {
   "mcpServers": {
-    "payclaw-demo": {
+    "payclaw-search": {
       "command": "npx",
       "args": ["mcp-remote", "https://payclaw-mcp.vercel.app/api/mcp"]
     }
@@ -47,7 +47,7 @@ Add to `.cursor/mcp.json` in your project:
 ```json
 {
   "mcpServers": {
-    "payclaw-demo": {
+    "payclaw-search": {
       "command": "npx",
       "args": ["mcp-remote", "https://payclaw-mcp.vercel.app/api/mcp"]
     }
@@ -118,7 +118,7 @@ Want to add x402 payments to your own MCP server? Use the payclaw SDK:
 ```json
 {
   "mcpServers": {
-    "payclaw-demo": {
+    "payclaw-search": {
       "command": "npx",
       "args": ["mcp-remote", "https://payclaw-mcp.vercel.app/api/mcp"]
     }
@@ -137,7 +137,7 @@ Want to add x402 payments to your own MCP server? Use the payclaw SDK:
 ```json
 {
   "mcpServers": {
-    "payclaw-demo": {
+    "payclaw-search": {
       "command": "npx",
       "args": ["mcp-remote", "https://payclaw-mcp.vercel.app/api/mcp"]
     }
