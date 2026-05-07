@@ -2,14 +2,15 @@ import { Redis } from "@upstash/redis";
 import { requirePayment } from "./payclaw/index.js";
 import type { PayclawConfig, NonceStore } from "./payclaw/index.js";
 
-function createRedisNonceStore(): NonceStore | null {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-    return null;
+function createRedisNonceStore(): NonceStore {
+  const url = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) {
+    throw new Error(
+      "Redis is required for nonce storage. Connect a KV store in your Vercel project settings."
+    );
   }
-  const redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN,
-  });
+  const redis = new Redis({ url, token });
   return {
     async has(txHash) {
       return (await redis.get(txHash.toLowerCase())) !== null;
@@ -24,7 +25,7 @@ function createRedisNonceStore(): NonceStore | null {
 
 interface JsonRpcRequest {
   jsonrpc: "2.0";
-  id: string | number;
+  id?: string | number;
   method: string;
   params?: unknown;
 }
@@ -33,7 +34,7 @@ interface JsonRpcResponse {
   jsonrpc: "2.0";
   id: string | number | null;
   result?: unknown;
-  error?: { code: number; message: string };
+  error?: { code: number; message: string; data?: unknown };
 }
 
 const FAKE_KB: Record<string, string[]> = {
@@ -44,7 +45,7 @@ const FAKE_KB: Record<string, string[]> = {
   ],
   usdc: [
     "USDC is a stablecoin pegged 1:1 to the US dollar.",
-    "USDC on Base Sepolia: 0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+    "USDC on Base Mainnet: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
   ],
   x402: [
     "x402 revives HTTP 402 Payment Required for machine-to-machine payments.",
@@ -64,20 +65,16 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-function ok(id: string | number, result: unknown): JsonRpcResponse {
-  return { jsonrpc: "2.0", id, result };
+function ok(id: string | number | null, result: unknown): JsonRpcResponse {
+  return { jsonrpc: "2.0", id: id ?? null, result };
 }
 
-function rpcErr(id: string | number | null, code: number, message: string): JsonRpcResponse {
-  return { jsonrpc: "2.0", id, error: { code, message } };
+function rpcErr(id: string | number | null, code: number, message: string, data?: unknown): JsonRpcResponse {
+  return { jsonrpc: "2.0", id, error: { code, message, ...(data !== undefined ? { data } : {}) } };
 }
 
 export type PaymentGate = ReturnType<typeof requirePayment>;
 
-/**
- * Create the payment gate once at startup (module level in your entry point).
- * Never call this inside a request handler — the nonce store must persist across requests.
- */
 const MAINNET_CONFIG = {
   network: "base",
   chainId: 8453,
@@ -89,12 +86,11 @@ export function createGate(walletAddress: string, priceUsdc: number): PaymentGat
   if (!walletAddress || !walletAddress.startsWith("0x")) {
     throw new Error("WALLET_ADDRESS is not set or invalid. Set it as an environment variable.");
   }
-  const nonceStore = createRedisNonceStore();
   const config: PayclawConfig = {
     priceUsdc,
     walletAddress,
     ...MAINNET_CONFIG,
-    ...(nonceStore ? { nonceStore } : {}),
+    nonceStore: createRedisNonceStore(),
   };
   return requirePayment(config);
 }
@@ -109,46 +105,73 @@ export async function handleMcp(req: Request, gate: PaymentGate, priceUsdc: numb
     return json(rpcErr(null, -32700, "Parse error"), 400);
   }
 
+  const id = rpc.id ?? null;
+
+  // MCP lifecycle
   if (rpc.method === "initialize") {
-    return json(ok(rpc.id, {
+    return json(ok(id, {
       protocolVersion: "2024-11-05",
       capabilities: { tools: {} },
       serverInfo: { name: "payclaw-demo", version: "0.1.1" },
     }));
   }
 
-  if (rpc.method === "notifications/initialized") {
+  if (rpc.method === "ping") {
+    return json(ok(id, {}));
+  }
+
+  // Notifications must not return errors — silently accept
+  if (rpc.method.startsWith("notifications/")) {
     return new Response(null, { status: 204 });
   }
 
+  // Empty capability lists for unsupported features
+  if (rpc.method === "resources/list") {
+    return json(ok(id, { resources: [] }));
+  }
+
+  if (rpc.method === "prompts/list") {
+    return json(ok(id, { prompts: [] }));
+  }
+
   if (rpc.method === "tools/list") {
-    return json(
-      ok(rpc.id, {
-        tools: [
-          {
-            name: "search_knowledge",
-            description: `Search the knowledge base. Costs ${priceUsdc} USDC per call.`,
-            inputSchema: {
-              type: "object",
-              properties: { query: { type: "string" } },
-              required: ["query"],
-            },
+    return json(ok(id, {
+      tools: [
+        {
+          name: "search_knowledge",
+          description: `Search the knowledge base. Costs ${priceUsdc} USDC per call.`,
+          inputSchema: {
+            type: "object",
+            properties: { query: { type: "string" } },
+            required: ["query"],
           },
-        ],
-      })
-    );
+        },
+      ],
+    }));
   }
 
   if (rpc.method === "tools/call") {
-    return gate.wrapFetch(async () => {
+    const gateResponse = await gate.wrapFetch(async () => {
       const params = rpc.params as { name?: string; arguments?: { query?: string } };
       if (params?.name !== "search_knowledge") {
-        return json(rpcErr(rpc.id, -32601, "Unknown tool"));
+        return json(rpcErr(id, -32601, "Unknown tool"));
       }
       const results = searchKnowledge(params?.arguments?.query ?? "");
-      return json(ok(rpc.id, { content: [{ type: "text", text: results.join("\n") }] }));
+      return json(ok(id, { content: [{ type: "text", text: results.join("\n") }] }));
     })(req);
+
+    // Wrap 402/429 in JSON-RPC envelope so mcp-remote can match response to request
+    if (gateResponse.status === 402 || gateResponse.status === 429) {
+      const body = await gateResponse.json();
+      return json(
+        rpcErr(id, -32000, gateResponse.status === 429 ? "Rate limit exceeded" : "Payment required", body),
+        gateResponse.status
+      );
+    }
+
+    return gateResponse;
   }
 
-  return json(rpcErr(rpc.id ?? null, -32601, "Method not found"), 404);
+  // Unknown method — HTTP 200 with JSON-RPC error (per JSON-RPC 2.0 spec)
+  return json(rpcErr(id, -32601, "Method not found"));
 }

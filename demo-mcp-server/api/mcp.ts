@@ -29,10 +29,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const safeBase = process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
     : "https://localhost";
+  const headers = new Headers();
+  for (const [key, val] of Object.entries(req.headers)) {
+    if (val === undefined) continue;
+    if (Array.isArray(val)) val.forEach((v) => headers.append(key, v));
+    else headers.set(key, val);
+  }
   const webReq = new Request(`${safeBase}${req.url}`, {
     method: req.method,
-    headers: req.headers as Record<string, string>,
-    body: body || undefined,
+    headers,
+    body: body.length > 0 ? body : undefined,
   });
 
   const webRes = await handleMcp(

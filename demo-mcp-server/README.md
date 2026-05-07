@@ -8,7 +8,7 @@
 
 <a name="english"></a>
 
-A live MCP server gated by x402 payments. Each tool call costs **0.001 USDC** on Base Sepolia (testnet).
+A live MCP server gated by x402 payments. Each tool call costs **0.001 USDC** on Base Mainnet (real USDC required).
 
 **Endpoint:** `https://payclaw-mcp.vercel.app/api/mcp`
 
@@ -147,7 +147,7 @@ Want to add x402 payments to your own MCP server? Use the payclaw SDK:
 
 1. Agent 呼叫 `search_knowledge`
 2. 伺服器返回 **HTTP 402**，附上付款資訊
-3. Agent 在 Base Sepolia 支付 0.001 USDC → 取得 tx hash
+3. Agent 在 Base Mainnet 支付 0.001 USDC → 取得 tx hash
 4. Agent 帶上 `X-Payment: <tx_hash>` header 重試
 5. 伺服器在鏈上驗證 → 返回結果
 
