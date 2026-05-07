@@ -86,6 +86,23 @@ app.post("/tool", gate, (req, res) => {
 }
 ```
 
+When rate limit is exceeded, the response is HTTP **429** with the same body format and `"reason": "rate limit exceeded"`.
+
+## Base Mainnet
+
+```typescript
+import { requirePayment } from "payclaw";
+
+const gate = requirePayment({
+  priceUsdc: 0.001,
+  walletAddress: "0xYourWallet",
+  network: "base",
+  chainId: 8453,
+  usdcAddress: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  rpcUrl: "https://mainnet.base.org",
+});
+```
+
 ---
 
 ## Config options
@@ -101,6 +118,9 @@ app.post("/tool", gate, (req, res) => {
 | `freshnessSeconds` | `300` | Max tx age in seconds |
 | `nonceCacheTtl` | `600` | Nonce cache TTL in seconds |
 | `nonceStore` | In-memory Map | Custom nonce store (see below) |
+| `rateLimitRequests` | `10` | Max requests per IP per window (0 = disabled) |
+| `rateLimitWindowMs` | `60000` | Rate limit window in milliseconds |
+| `trustProxy` | `false` | Trust `X-Forwarded-For` for per-IP rate limiting. Set `true` only when behind a trusted reverse proxy (Nginx, Cloudflare, etc.). When `false`, all traffic shares one rate limit bucket. |
 
 ---
 

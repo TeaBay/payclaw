@@ -19,15 +19,19 @@ function createRateLimiter(maxRequests: number, windowMs: number) {
     const now = Date.now();
     const cutoff = now - windowMs;
     const times = (log.get(ip) ?? []).filter((t) => t > cutoff);
-    if (times.length >= maxRequests) { log.set(ip, times); return false; }
+    if (times.length >= maxRequests) {
+      if (times.length > 0) log.set(ip, times); else log.delete(ip);
+      return false;
+    }
     times.push(now);
     log.set(ip, times);
     return true;
   };
 }
 
-function clientIp(headers: { get(k: string): string | null }): string {
-  return headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+function clientIp(headers: { get(k: string): string | null }, trustProxy: boolean): string {
+  if (trustProxy) return headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+  return "unknown";
 }
 
 /** In-memory nonce store — sufficient for single-process/single-worker deployments. */
@@ -43,8 +47,10 @@ function createMemoryNonceStore(): NonceStore {
     },
     async set(txHash, ttlSeconds) {
       const key = txHash.toLowerCase();
-      if (store.has(key)) return false;
-      store.set(key, Math.floor(Date.now() / 1000) + ttlSeconds);
+      const now = Math.floor(Date.now() / 1000);
+      const existing = store.get(key);
+      if (existing !== undefined && now <= existing) return false;
+      store.set(key, now + ttlSeconds);
       return true;
     },
   };
@@ -55,6 +61,8 @@ function resolve(config: PayclawConfig): ResolvedConfig {
     throw new Error(`Invalid walletAddress: ${config.walletAddress}`);
   }
   if (config.priceUsdc <= 0) throw new Error("priceUsdc must be > 0");
+  const rpcUrl = config.rpcUrl ?? RPC_BASE_SEPOLIA;
+  if (!rpcUrl.startsWith("https://")) throw new Error("rpcUrl must use HTTPS");
   return {
     priceUsdc: config.priceUsdc,
     priceUnits: toUnits(config.priceUsdc),
@@ -62,7 +70,7 @@ function resolve(config: PayclawConfig): ResolvedConfig {
     network: config.network ?? "base-sepolia",
     chainId: config.chainId ?? 84532,
     usdcAddress: config.usdcAddress ?? USDC_BASE_SEPOLIA,
-    rpcUrl: config.rpcUrl ?? RPC_BASE_SEPOLIA,
+    rpcUrl,
     freshnessSeconds: config.freshnessSeconds ?? 300,
     nonceCacheTtl: config.nonceCacheTtl ?? 600,
     nonceStore: config.nonceStore ?? createMemoryNonceStore(),
@@ -102,6 +110,7 @@ export function requirePayment(config: PayclawConfig) {
   const cfg = resolve(config);
   const maxReq = config.rateLimitRequests ?? 10;
   const windowMs = config.rateLimitWindowMs ?? 60_000;
+  const trustProxy = config.trustProxy ?? false;
   const checkRate = maxReq > 0 ? createRateLimiter(maxReq, windowMs) : null;
 
   // Cloudflare Workers / fetch-based handler wrapper
@@ -109,7 +118,7 @@ export function requirePayment(config: PayclawConfig) {
     handler: (req: Request, ...rest: unknown[]) => Promise<Response>
   ): (req: Request, ...rest: unknown[]) => Promise<Response> {
     return async (req, ...rest) => {
-      if (checkRate && !checkRate(clientIp(req.headers))) {
+      if (checkRate && !checkRate(clientIp(req.headers, trustProxy))) {
         return Response.json(build402(cfg, "rate limit exceeded"), { status: 429 });
       }
       const txHash = req.headers.get("x-payment");
@@ -129,9 +138,9 @@ export function requirePayment(config: PayclawConfig) {
 
   // Express / Hono middleware signature (req, res, next)
   async function expressMiddleware(req: any, res: any, next: () => void) {
-    const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0].trim()
-      ?? req.headers["x-real-ip"] as string
-      ?? "unknown";
+    const ip = trustProxy
+      ? ((req.headers["x-forwarded-for"] as string)?.split(",")[0].trim() ?? "unknown")
+      : "unknown";
     if (checkRate && !checkRate(ip)) {
       return res.status(429).json(build402(cfg, "rate limit exceeded"));
     }

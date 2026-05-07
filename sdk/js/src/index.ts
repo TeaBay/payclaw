@@ -20,7 +20,7 @@ function createRateLimiter(maxRequests: number, windowMs: number) {
     const cutoff = now - windowMs;
     const times = (log.get(ip) ?? []).filter((t) => t > cutoff);
     if (times.length >= maxRequests) {
-      if (times.length > 0) log.set(ip, times); else log.delete(ip);
+      log.set(ip, times);
       return false;
     }
     times.push(now);

@@ -87,6 +87,26 @@ if not allowed:
 }
 ```
 
+When rate limit is exceeded, the response is HTTP **429** with the same body format and `"reason": "rate limit exceeded"`.
+
+---
+
+## Base Mainnet
+
+```python
+from payclaw import mainnet_config, require_payment
+
+config = mainnet_config(
+    price_usdc=0.001,
+    wallet_address="0xYourWallet",
+)
+
+@app.post("/tool")
+@require_payment(config)
+async def my_tool(request: Request):
+    return {"result": "..."}
+```
+
 ---
 
 ## Config options
@@ -102,6 +122,9 @@ if not allowed:
 | `freshness_seconds` | `300` | Max tx age in seconds |
 | `nonce_cache_ttl` | `600` | Nonce cache TTL in seconds |
 | `nonce_db_path` | `.payclaw_nonces.db` | SQLite file for replay protection |
+| `rate_limit_requests` | `10` | Max requests per IP per window (0 = disabled) |
+| `rate_limit_window_seconds` | `60` | Rate limit window in seconds |
+| `trust_proxy` | `False` | Trust X-Forwarded-For for per-IP rate limiting. Set `True` only when behind a trusted reverse proxy. When `False`, all traffic shares one rate limit bucket. |
 
 ---
 

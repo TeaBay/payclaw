@@ -14,10 +14,10 @@ Usage:
         return {"result": "tool output"}
 """
 
-from payclaw.config import PayclawConfig
+from payclaw.config import PayclawConfig, mainnet_config
 from payclaw.middleware import PayclawMiddleware, require_payment
 from payclaw.nonce_cache import NonceCache
 from payclaw.verify import verify_payment
 
-__all__ = ["require_payment", "PayclawMiddleware", "PayclawConfig", "NonceCache", "verify_payment"]
+__all__ = ["require_payment", "PayclawMiddleware", "PayclawConfig", "mainnet_config", "NonceCache", "verify_payment"]
 __version__ = "0.1.0"
