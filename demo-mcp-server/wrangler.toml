@@ -1,0 +1,7 @@
+name = "payclaw-demo"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[vars]
+WALLET_ADDRESS = ""
+PRICE_USDC = "0.001"

@@ -1,0 +1,21 @@
+{
+  "name": "payclaw-demo-mcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Demo MCP server showing end-to-end x402 payment flow with payclaw",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy:cf": "wrangler deploy",
+    "deploy:vercel": "vercel deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "payclaw": "../sdk/js"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.0.0",
+    "typescript": "^5.0.0",
+    "wrangler": "^3.0.0"
+  }
+}

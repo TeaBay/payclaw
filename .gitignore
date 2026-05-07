@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# Nonce cache (SQLite — contains tx hashes, not secrets, but local only)
+*.db
+*.db-shm
+*.db-wal
+
+# Deployment artifacts
+.vercel/
+.wrangler/
+
+# Internal planning files
+.omc/
+
+# OS
+.DS_Store
+Thumbs.db
