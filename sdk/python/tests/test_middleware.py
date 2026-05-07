@@ -33,7 +33,11 @@ def test_non_hex_hash(mw):
 
 def test_valid_format_hits_rpc(mw):
     from unittest.mock import patch
-    with patch("payclaw.verify._rpc", return_value=None):
+    def rpc_side_effect(url, method, params, retries=3):
+        if method == "eth_chainId":
+            return "0x14a34"  # base-sepolia
+        return None
+    with patch("payclaw.verify._rpc", side_effect=rpc_side_effect):
         ok, reason = mw.check({"x-payment": TX})
     assert ok is False
     assert "not found" in reason

@@ -44,6 +44,10 @@ def verify_payment(tx_hash: str, config, nonce_cache) -> tuple[bool, str]:
     if nonce_cache.is_used(tx_hash):
         return False, "tx already used"
 
+    chain_id_hex = _rpc(config.rpc_url, "eth_chainId", [])
+    if int(chain_id_hex, 16) != config.chain_id:
+        return False, f"chain mismatch: expected {config.chain_id}, got {int(chain_id_hex, 16)}"
+
     tx = _rpc(config.rpc_url, "eth_getTransactionByHash", [tx_hash])
     if tx is None:
         return False, "tx not found"
@@ -73,7 +77,10 @@ def verify_payment(tx_hash: str, config, nonce_cache) -> tuple[bool, str]:
     if usdc_log is None:
         return False, "no USDC transfer to recipient found in tx"
 
-    value = int(usdc_log.get("data", "0x0"), 16)
+    try:
+        value = int(usdc_log.get("data", "0x0"), 16)
+    except ValueError:
+        return False, "malformed transfer amount in log data"
     if value < config.price_units:
         return False, f"insufficient USDC: got {value} units, need {config.price_units}"
 

@@ -44,8 +44,13 @@ def cache(cfg):
     return NonceCache(cfg.nonce_db_path)
 
 
-def _rpc_side_effect(tx, receipt, block):
+CHAIN_ID_HEX = "0x14a34"  # 84532 = base-sepolia
+
+
+def _rpc_side_effect(tx, receipt, block, chain_id=CHAIN_ID_HEX):
     def side_effect(url, method, params, retries=3):
+        if method == "eth_chainId":
+            return chain_id
         if method == "eth_getTransactionByHash":
             return tx
         if method == "eth_getTransactionReceipt":
@@ -72,10 +77,19 @@ def test_replay_rejected(cfg, cache):
 
 
 def test_tx_not_found(cfg, cache):
-    with patch("payclaw.verify._rpc", return_value=None):
+    with patch("payclaw.verify._rpc", side_effect=_rpc_side_effect(None, None, None)):
         ok, reason = verify_payment(TX, cfg, cache)
     assert ok is False
     assert "not found" in reason
+
+
+def test_chain_mismatch(cfg, cache):
+    with patch("payclaw.verify._rpc", side_effect=_rpc_side_effect(
+        make_tx(), make_receipt(), make_block(), chain_id="0x1"  # Ethereum mainnet
+    )):
+        ok, reason = verify_payment(TX, cfg, cache)
+    assert ok is False
+    assert "chain mismatch" in reason
 
 
 def test_reverted_tx(cfg, cache):
