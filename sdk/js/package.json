@@ -1,5 +1,5 @@
 {
-  "name": "payclaw",
+  "name": "payclaw-x402",
   "version": "0.1.0",
   "description": "Drop-in x402 payment middleware for MCP servers — charge AI agents per tool call with USDC",
   "license": "MIT",
