@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from decimal import Decimal
 
 USDC_BASE_SEPOLIA = "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
 RPC_BASE_SEPOLIA = "https://sepolia.base.org"
@@ -15,6 +16,8 @@ class PayclawConfig:
     freshness_seconds: int = 300
     nonce_cache_ttl: int = 600
     nonce_db_path: str = ".payclaw_nonces.db"
+    rate_limit_requests: int = 10   # max calls per IP per window (0 = disabled)
+    rate_limit_window_seconds: int = 60
 
     def __post_init__(self):
         if (
@@ -30,5 +33,5 @@ class PayclawConfig:
 
     @property
     def price_units(self) -> int:
-        # USDC has 6 decimals — integer math only, no floats in comparisons
-        return int(round(self.price_usdc * 1_000_000))
+        # Decimal avoids IEEE 754 float precision errors (e.g. 0.1 * 1_000_000)
+        return int(Decimal(str(self.price_usdc)) * 1_000_000)
