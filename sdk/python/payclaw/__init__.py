@@ -20,4 +20,4 @@ from payclaw.nonce_cache import NonceCache
 from payclaw.verify import verify_payment
 
 __all__ = ["require_payment", "PayclawMiddleware", "PayclawConfig", "mainnet_config", "NonceCache", "verify_payment"]
-__version__ = "0.1.1"
+__version__ = "0.1.2"
