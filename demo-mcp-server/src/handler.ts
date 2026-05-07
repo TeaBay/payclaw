@@ -109,6 +109,18 @@ export async function handleMcp(req: Request, gate: PaymentGate, priceUsdc: numb
     return json(rpcErr(null, -32700, "Parse error"), 400);
   }
 
+  if (rpc.method === "initialize") {
+    return json(ok(rpc.id, {
+      protocolVersion: "2024-11-05",
+      capabilities: { tools: {} },
+      serverInfo: { name: "payclaw-demo", version: "0.1.1" },
+    }));
+  }
+
+  if (rpc.method === "notifications/initialized") {
+    return new Response(null, { status: 204 });
+  }
+
   if (rpc.method === "tools/list") {
     return json(
       ok(rpc.id, {
