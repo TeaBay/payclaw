@@ -21,6 +21,7 @@ class PayclawConfig:
     nonce_db_path: str = ".payclaw_nonces.db"
     rate_limit_requests: int = 10
     rate_limit_window_seconds: int = 60
+    trust_proxy: bool = False  # set True only when behind a trusted reverse proxy
 
     def __post_init__(self):
         if (
@@ -33,6 +34,8 @@ class PayclawConfig:
             raise ValueError("price_usdc must be > 0")
         if self.nonce_cache_ttl < self.freshness_seconds:
             raise ValueError("nonce_cache_ttl must be >= freshness_seconds")
+        if not self.rpc_url.startswith("https://"):
+            raise ValueError("rpc_url must use HTTPS")
 
     @property
     def price_units(self) -> int:

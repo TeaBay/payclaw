@@ -6,6 +6,30 @@ export type { PayclawConfig, NonceStore, X402Body } from "./types.js";
 const USDC_BASE_SEPOLIA = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 const RPC_BASE_SEPOLIA = "https://sepolia.base.org";
 
+function toUnits(priceUsdc: number): bigint {
+  // String-based conversion avoids IEEE 754 float precision errors
+  const s = priceUsdc.toFixed(6);
+  const [intPart, decPart = ""] = s.split(".");
+  return BigInt(intPart) * 1_000_000n + BigInt(decPart.padEnd(6, "0").slice(0, 6));
+}
+
+function createRateLimiter(maxRequests: number, windowMs: number) {
+  const log = new Map<string, number[]>();
+  return function isAllowed(ip: string): boolean {
+    const now = Date.now();
+    const cutoff = now - windowMs;
+    const times = (log.get(ip) ?? []).filter((t) => t > cutoff);
+    if (times.length >= maxRequests) { log.set(ip, times); return false; }
+    times.push(now);
+    log.set(ip, times);
+    return true;
+  };
+}
+
+function clientIp(headers: { get(k: string): string | null }): string {
+  return headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+}
+
 /** In-memory nonce store — sufficient for single-process/single-worker deployments. */
 function createMemoryNonceStore(): NonceStore {
   const store = new Map<string, number>();
@@ -33,8 +57,7 @@ function resolve(config: PayclawConfig): ResolvedConfig {
   if (config.priceUsdc <= 0) throw new Error("priceUsdc must be > 0");
   return {
     priceUsdc: config.priceUsdc,
-    // Integer math only — USDC has 6 decimals
-    priceUnits: BigInt(Math.round(config.priceUsdc * 1_000_000)),
+    priceUnits: toUnits(config.priceUsdc),
     walletAddress: config.walletAddress,
     network: config.network ?? "base-sepolia",
     chainId: config.chainId ?? 84532,
@@ -77,12 +100,18 @@ function build402(cfg: ResolvedConfig, reason?: string): X402Body {
  */
 export function requirePayment(config: PayclawConfig) {
   const cfg = resolve(config);
+  const maxReq = config.rateLimitRequests ?? 10;
+  const windowMs = config.rateLimitWindowMs ?? 60_000;
+  const checkRate = maxReq > 0 ? createRateLimiter(maxReq, windowMs) : null;
 
   // Cloudflare Workers / fetch-based handler wrapper
   function wrapFetch(
     handler: (req: Request, ...rest: unknown[]) => Promise<Response>
   ): (req: Request, ...rest: unknown[]) => Promise<Response> {
     return async (req, ...rest) => {
+      if (checkRate && !checkRate(clientIp(req.headers))) {
+        return Response.json(build402(cfg, "rate limit exceeded"), { status: 429 });
+      }
       const txHash = req.headers.get("x-payment");
       if (!txHash) {
         return Response.json(build402(cfg, "missing X-Payment header"), { status: 402 });
@@ -100,12 +129,18 @@ export function requirePayment(config: PayclawConfig) {
 
   // Express / Hono middleware signature (req, res, next)
   async function expressMiddleware(req: any, res: any, next: () => void) {
+    const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0].trim()
+      ?? req.headers["x-real-ip"] as string
+      ?? "unknown";
+    if (checkRate && !checkRate(ip)) {
+      return res.status(429).json(build402(cfg, "rate limit exceeded"));
+    }
     const txHash: string | undefined =
       req.headers?.["x-payment"] ?? req.header?.("x-payment");
     if (!txHash) {
       return res.status(402).json(build402(cfg, "missing X-Payment header"));
     }
-    if (!txHash.startsWith("0x") || txHash.length !== 66 || !/^0x[0-9a-fA-F]{64}$/.test(txHash)) {
+    if (!isValidTxHash(txHash)) {
       return res.status(402).json(build402(cfg, "invalid tx hash format"));
     }
     const result = await verifyPayment(txHash, cfg);

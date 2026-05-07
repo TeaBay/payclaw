@@ -22,13 +22,22 @@ class _RateLimiter:
         now = time.monotonic()
         cutoff = now - self._window
         with self._lock:
-            ts = self._log[key]
-            while ts and ts[0] < cutoff:
-                ts.pop(0)
-            if len(ts) >= self._max:
+            fresh = [t for t in self._log.get(key, []) if t > cutoff]
+            if len(fresh) >= self._max:
+                self._log[key] = fresh
                 return False
-            ts.append(now)
+            fresh.append(now)
+            self._log[key] = fresh
             return True
+
+    def evict(self):
+        """Remove keys with no recent requests. Call periodically if needed."""
+        now = time.monotonic()
+        cutoff = now - self._window
+        with self._lock:
+            stale = [k for k, ts in self._log.items() if not any(t > cutoff for t in ts)]
+            for k in stale:
+                del self._log[k]
 
 
 def _build_402(config: PayclawConfig, reason: str = "") -> dict:
@@ -83,10 +92,11 @@ class PayclawMiddleware:
         return 402, _build_402(self.config, reason)
 
     def _client_ip(self, headers: dict) -> str:
-        forwarded = headers.get("X-Forwarded-For") or headers.get("x-forwarded-for", "")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
-        return headers.get("X-Real-IP") or headers.get("x-real-ip") or "unknown"
+        if self.config.trust_proxy:
+            forwarded = headers.get("X-Forwarded-For") or headers.get("x-forwarded-for", "")
+            if forwarded:
+                return forwarded.split(",")[0].strip()
+        return "unknown"
 
 
 def require_payment(config: PayclawConfig):

@@ -8,6 +8,8 @@ export interface PayclawConfig {
   freshnessSeconds?: number;
   nonceCacheTtl?: number;
   nonceStore?: NonceStore;
+  rateLimitRequests?: number;   // max requests per IP per window (0 = disabled, default 10)
+  rateLimitWindowMs?: number;   // window in ms (default 60000)
 }
 
 export interface ResolvedConfig {

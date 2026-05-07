@@ -10,6 +10,7 @@ export interface PayclawConfig {
   nonceStore?: NonceStore;
   rateLimitRequests?: number;   // max requests per IP per window (0 = disabled, default 10)
   rateLimitWindowMs?: number;   // window in ms (default 60000)
+  trustProxy?: boolean;         // trust X-Forwarded-For for rate limiting (default false)
 }
 
 export interface ResolvedConfig {

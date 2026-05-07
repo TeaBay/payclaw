@@ -75,6 +75,7 @@ describe("wrapFetch — rate limiting", () => {
       walletAddress: WALLET,
       rateLimitRequests: 1,
       rateLimitWindowMs: 60_000,
+      trustProxy: true,
     });
     const handler = async () => new Response("ok");
     await gate.wrapFetch(handler)(makeRequest({ "x-forwarded-for": "1.1.1.1" }));

@@ -55,7 +55,8 @@ def test_rate_limit(tmp_path):
 def test_rate_limit_different_ips(tmp_path):
     cfg = PayclawConfig(price_usdc=0.001, wallet_address=WALLET,
                         nonce_db_path=str(tmp_path / "n.db"),
-                        rate_limit_requests=1, rate_limit_window_seconds=60)
+                        rate_limit_requests=1, rate_limit_window_seconds=60,
+                        trust_proxy=True)
     mw = PayclawMiddleware(cfg)
     mw.check({"x-forwarded-for": "1.1.1.1"})
     ok, reason = mw.check({"x-forwarded-for": "2.2.2.2"})

@@ -2,13 +2,14 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { handleMcp, createGate } from "../src/handler.js";
 
 let gate: ReturnType<typeof createGate> | null = null;
+const priceUsdc = parseFloat(process.env.PRICE_USDC ?? "0.001");
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!gate) {
     try {
       gate = createGate(
         (process.env.WALLET_ADDRESS ?? "").trim(),
-        parseFloat(process.env.PRICE_USDC ?? "0.001")
+        priceUsdc
       );
     } catch (e) {
       console.error("[payclaw] Gate initialization failed:", e);
@@ -37,7 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const webRes = await handleMcp(
     webReq,
     gate,
-    parseFloat(process.env.PRICE_USDC ?? "0.001")
+    priceUsdc
   );
 
   res.status(webRes.status);
