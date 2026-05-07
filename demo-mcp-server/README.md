@@ -61,11 +61,11 @@ Add to `.cursor/mcp.json` in your project:
 
 1. Agent calls `search_knowledge`
 2. Server returns **HTTP 402** with payment details
-3. Agent pays 0.001 USDC on Base Sepolia → gets tx hash
+3. Agent pays 0.001 USDC on Base Mainnet → gets tx hash
 4. Agent retries with `X-Payment: <tx_hash>` header
 5. Server verifies on-chain → returns result
 
-Get free testnet USDC from [Circle faucet](https://faucet.circle.com) — select **Base Sepolia**.
+You need real USDC on Base Mainnet. Buy USDC on [Coinbase](https://coinbase.com) or any exchange and send to Base network.
 
 ---
 
@@ -155,7 +155,7 @@ Want to add x402 payments to your own MCP server? Use the payclaw SDK:
 4. Agent 帶上 `X-Payment: <tx_hash>` header 重試
 5. 伺服器在鏈上驗證 → 返回結果
 
-從 [Circle faucet](https://faucet.circle.com) 免費取得測試網 USDC — 選擇 **Base Sepolia**。
+需要 Base Mainnet 上的真實 USDC。可在 [Coinbase](https://coinbase.com) 或其他交易所購買 USDC 並發送至 Base 網路。
 
 ---
 
