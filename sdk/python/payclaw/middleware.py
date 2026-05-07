@@ -32,7 +32,7 @@ class PayclawMiddleware:
         Returns (allowed, reason).
         headers: any dict-like with HTTP headers (case-insensitive lookup attempted).
         """
-        tx_hash = headers.get("X-Payment") or headers.get("x-payment") or headers.get("x_payment")
+        tx_hash = headers.get("X-Payment") or headers.get("x-payment")
         if not tx_hash:
             return False, "missing X-Payment header"
         tx_hash = tx_hash.strip()
@@ -118,14 +118,8 @@ def _flask_headers() -> dict:
 
 
 def _fastapi_response(status: int, body: dict):
-    try:
-        from fastapi.responses import JSONResponse
-        return JSONResponse(status_code=status, content=body)
-    except ImportError:
-        # Starlette fallback
-        import json
-        from starlette.responses import JSONResponse as StarletteJSON
-        return StarletteJSON(status_code=status, content=body)
+    from fastapi.responses import JSONResponse
+    return JSONResponse(status_code=status, content=body)
 
 
 def _flask_response(status: int, body: dict):

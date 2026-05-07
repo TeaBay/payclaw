@@ -11,9 +11,10 @@ function createMemoryNonceStore(): NonceStore {
   const store = new Map<string, number>();
   return {
     async has(txHash) {
-      const exp = store.get(txHash.toLowerCase());
+      const key = txHash.toLowerCase();
+      const exp = store.get(key);
       if (exp === undefined) return false;
-      if (Date.now() / 1000 > exp) { store.delete(txHash.toLowerCase()); return false; }
+      if (Math.floor(Date.now() / 1000) > exp) { store.delete(key); return false; }
       return true;
     },
     async set(txHash, ttlSeconds) {
@@ -43,6 +44,10 @@ function resolve(config: PayclawConfig): ResolvedConfig {
     nonceCacheTtl: config.nonceCacheTtl ?? 600,
     nonceStore: config.nonceStore ?? createMemoryNonceStore(),
   };
+}
+
+function isValidTxHash(h: string): boolean {
+  return /^0x[0-9a-fA-F]{64}$/.test(h);
 }
 
 function build402(cfg: ResolvedConfig, reason?: string): X402Body {
@@ -82,7 +87,7 @@ export function requirePayment(config: PayclawConfig) {
       if (!txHash) {
         return Response.json(build402(cfg, "missing X-Payment header"), { status: 402 });
       }
-      if (!txHash.startsWith("0x") || txHash.length !== 66 || !/^0x[0-9a-fA-F]{64}$/.test(txHash)) {
+      if (!isValidTxHash(txHash)) {
         return Response.json(build402(cfg, "invalid tx hash format"), { status: 402 });
       }
       const result = await verifyPayment(txHash, cfg);
