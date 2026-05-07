@@ -7,14 +7,12 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy:cf": "wrangler deploy",
-    "deploy:vercel": "vercel deploy",
+    "deploy:vercel": "vercel deploy --prod",
     "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "payclaw": "../sdk/js"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.0.0",
+    "@types/node": "^20.0.0",
     "typescript": "^5.0.0",
     "wrangler": "^3.0.0"
   }

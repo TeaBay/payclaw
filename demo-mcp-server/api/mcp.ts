@@ -1,6 +1,7 @@
 // Vercel Edge Function entry point
 import { handleMcp, createGate } from "../src/handler.js";
 
+
 export const runtime = "edge";
 
 // Gate is created once per edge instance — nonce store persists across requests

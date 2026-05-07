@@ -1,5 +1,5 @@
-import { requirePayment } from "payclaw";
-import type { PayclawConfig } from "payclaw";
+import { requirePayment } from "./payclaw/index.js";
+import type { PayclawConfig } from "./payclaw/index.js";
 
 interface JsonRpcRequest {
   jsonrpc: "2.0";
