@@ -9,6 +9,9 @@ from payclaw.nonce_cache import NonceCache
 from payclaw.verify import verify_payment
 
 
+_RATE_LIMIT_REASON = "rate limit exceeded"
+
+
 class _RateLimiter:
     """Per-key sliding window rate limiter."""
 
@@ -74,7 +77,7 @@ class PayclawMiddleware:
         if self._rate_limiter:
             ip = self._client_ip(headers)
             if not self._rate_limiter.is_allowed(ip):
-                return False, "rate limit exceeded"
+                return False, _RATE_LIMIT_REASON
 
         tx_hash = headers.get("X-Payment") or headers.get("x-payment")
         if not tx_hash:
@@ -92,7 +95,7 @@ class PayclawMiddleware:
         return 402, _build_402(self.config, reason)
 
     def response_for(self, reason: str) -> tuple[int, dict]:
-        if reason == "rate limit exceeded":
+        if reason == _RATE_LIMIT_REASON:
             return 429, {"error": "Too Many Requests", "reason": reason}
         return self.payment_required(reason)
 

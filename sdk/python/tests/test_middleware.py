@@ -69,3 +69,16 @@ def test_payment_required_body(mw):
     assert body["x402"] is True
     assert body["currency"] == "USDC"
     assert body["reason"] == "test reason"
+
+
+def test_response_for_rate_limit(mw):
+    status, body = mw.response_for("rate limit exceeded")
+    assert status == 429
+    assert body["error"] == "Too Many Requests"
+    assert body["reason"] == "rate limit exceeded"
+
+
+def test_response_for_payment_required(mw):
+    status, body = mw.response_for("tx not found")
+    assert status == 402
+    assert body["x402"] is True

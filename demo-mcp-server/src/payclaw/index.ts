@@ -20,7 +20,7 @@ function createRateLimiter(maxRequests: number, windowMs: number) {
     const cutoff = now - windowMs;
     const times = (log.get(ip) ?? []).filter((t) => t > cutoff);
     if (times.length >= maxRequests) {
-      if (times.length > 0) log.set(ip, times); else log.delete(ip);
+      log.set(ip, times);
       return false;
     }
     times.push(now);
@@ -82,15 +82,16 @@ function isValidTxHash(h: string): boolean {
 }
 
 function build402(cfg: ResolvedConfig, reason?: string): X402Body {
-  return {
+  const body: X402Body = {
     x402: true,
     price: String(cfg.priceUsdc),
     currency: "USDC",
     network: cfg.network,
     recipient: cfg.walletAddress,
     chain_id: cfg.chainId,
-    ...(reason ? { reason } : {}),
   };
+  if (reason) body.reason = reason;
+  return body;
 }
 
 /**
