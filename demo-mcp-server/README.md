@@ -10,6 +10,8 @@
 
 A live MCP server gated by x402 payments. Each tool call costs **0.001 USDC** on Base Mainnet (real USDC required).
 
+> ⚠️ **Production server — real charges apply.** Each `tools/call` request requires a valid USDC payment on Base Mainnet. Your AI agent must support the [x402 protocol](https://github.com/coinbase/x402) to pay automatically. Standard Claude Desktop does not pay automatically — you need an x402-aware agent framework.
+
 **Endpoint:** `https://payclaw-mcp.vercel.app/api/mcp`
 
 Built with [payclaw](https://pypi.org/project/payclaw/) — drop-in x402 payment middleware for MCP servers.
@@ -96,7 +98,9 @@ Want to add x402 payments to your own MCP server? Use the payclaw SDK:
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F01XSFJ0)
 
-一個以 x402 付款把關的 MCP 伺服器。每次工具呼叫費用為 **0.001 USDC**（Base Sepolia 測試網）。
+一個以 x402 付款把關的 MCP 伺服器。每次工具呼叫費用為 **0.001 USDC**（Base Mainnet 真實 USDC）。
+
+> ⚠️ **正式環境 — 實際收費。** 每次 `tools/call` 請求需在 Base Mainnet 支付 USDC。你的 AI Agent 必須支援 [x402 協議](https://github.com/coinbase/x402) 才能自動付款。標準 Claude Desktop 不會自動付款 — 需要支援 x402 的 Agent 框架。
 
 **端點：** `https://payclaw-mcp.vercel.app/api/mcp`
 
