@@ -37,27 +37,6 @@ interface JsonRpcResponse {
   error?: { code: number; message: string; data?: unknown };
 }
 
-const FAKE_KB: Record<string, string[]> = {
-  default: [
-    "The answer is 42.",
-    "Payclaw enables MCP server monetization via x402.",
-    "Base chain is an Ethereum L2 by Coinbase.",
-  ],
-  usdc: [
-    "USDC is a stablecoin pegged 1:1 to the US dollar.",
-    "USDC on Base Mainnet: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-  ],
-  x402: [
-    "x402 revives HTTP 402 Payment Required for machine-to-machine payments.",
-    "Payment flow: agent pays USDC on-chain, retries with X-Payment header.",
-  ],
-};
-
-function searchKnowledge(query: string): string[] {
-  const key = Object.keys(FAKE_KB).find((k) => query.toLowerCase().includes(k));
-  return key ? FAKE_KB[key] : FAKE_KB.default;
-}
-
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -95,6 +74,30 @@ export function createGate(walletAddress: string, priceUsdc: number): PaymentGat
   return requirePayment(config);
 }
 
+async function proxyRequest(
+  url: string,
+  method: string,
+  headers: Record<string, string>,
+  body?: string
+): Promise<{ status: number; body: unknown }> {
+  if (!url.startsWith("https://")) {
+    return { status: 400, body: { error: "url must use HTTPS" } };
+  }
+  const res = await fetch(url, {
+    method: method.toUpperCase(),
+    headers: { "Content-Type": "application/json", ...headers },
+    body: method.toUpperCase() !== "GET" ? body : undefined,
+  });
+  let responseBody: unknown;
+  const ct = res.headers.get("content-type") ?? "";
+  if (ct.includes("application/json")) {
+    responseBody = await res.json();
+  } else {
+    responseBody = await res.text();
+  }
+  return { status: res.status, body: responseBody };
+}
+
 export async function handleMcp(req: Request, gate: PaymentGate, priceUsdc: number): Promise<Response> {
   if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
 
@@ -107,12 +110,11 @@ export async function handleMcp(req: Request, gate: PaymentGate, priceUsdc: numb
 
   const id = rpc.id ?? null;
 
-  // MCP lifecycle
   if (rpc.method === "initialize") {
     return json(ok(id, {
       protocolVersion: "2024-11-05",
       capabilities: { tools: {} },
-      serverInfo: { name: "payclaw-search", version: "0.1.1" },
+      serverInfo: { name: "payclaw", version: "0.1.1" },
     }));
   }
 
@@ -120,12 +122,10 @@ export async function handleMcp(req: Request, gate: PaymentGate, priceUsdc: numb
     return json(ok(id, {}));
   }
 
-  // Notifications must not return errors — silently accept
   if (rpc.method.startsWith("notifications/")) {
     return new Response(null, { status: 204 });
   }
 
-  // Empty capability lists for unsupported features
   if (rpc.method === "resources/list") {
     return json(ok(id, { resources: [] }));
   }
@@ -138,12 +138,17 @@ export async function handleMcp(req: Request, gate: PaymentGate, priceUsdc: numb
     return json(ok(id, {
       tools: [
         {
-          name: "search_knowledge",
-          description: `Search the knowledge base. Costs ${priceUsdc} USDC per call.`,
+          name: "proxy_request",
+          description: `Forward an HTTP request to any HTTPS API. Costs ${priceUsdc} USDC per call via x402 on Base Mainnet.`,
           inputSchema: {
             type: "object",
-            properties: { query: { type: "string" } },
-            required: ["query"],
+            properties: {
+              url: { type: "string", description: "HTTPS endpoint to call" },
+              method: { type: "string", enum: ["GET", "POST", "PUT", "PATCH", "DELETE"], default: "GET" },
+              headers: { type: "object", description: "Optional HTTP headers", additionalProperties: { type: "string" } },
+              body: { type: "string", description: "Optional request body (JSON string)" },
+            },
+            required: ["url"],
           },
         },
       ],
@@ -152,15 +157,29 @@ export async function handleMcp(req: Request, gate: PaymentGate, priceUsdc: numb
 
   if (rpc.method === "tools/call") {
     const gateResponse = await gate.wrapFetch(async () => {
-      const params = rpc.params as { name?: string; arguments?: { query?: string } };
-      if (params?.name !== "search_knowledge") {
+      const params = rpc.params as { name?: string; arguments?: { url?: string; method?: string; headers?: Record<string, string>; body?: string } };
+
+      if (params?.name !== "proxy_request") {
         return json(rpcErr(id, -32601, "Unknown tool"));
       }
-      const results = searchKnowledge(params?.arguments?.query ?? "");
-      return json(ok(id, { content: [{ type: "text", text: results.join("\n") }] }));
+
+      const { url, method = "GET", headers = {}, body } = params?.arguments ?? {};
+
+      if (!url) {
+        return json(rpcErr(id, -32602, "url is required"));
+      }
+
+      try {
+        const result = await proxyRequest(url, method, headers, body);
+        return json(ok(id, {
+          content: [{ type: "text", text: JSON.stringify(result.body, null, 2) }],
+          status: result.status,
+        }));
+      } catch (e) {
+        return json(rpcErr(id, -32000, `Proxy error: ${e}`));
+      }
     })(req);
 
-    // Wrap 402/429 in JSON-RPC envelope so mcp-remote can match response to request
     if (gateResponse.status === 402 || gateResponse.status === 429) {
       const body = await gateResponse.json();
       return json(
@@ -172,6 +191,5 @@ export async function handleMcp(req: Request, gate: PaymentGate, priceUsdc: numb
     return gateResponse;
   }
 
-  // Unknown method — HTTP 200 with JSON-RPC error (per JSON-RPC 2.0 spec)
   return json(rpcErr(id, -32601, "Method not found"));
 }
