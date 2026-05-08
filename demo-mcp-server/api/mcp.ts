@@ -1,6 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { handleMcp, createGate } from "../src/handler.js";
 
+export const config = { api: { bodyParser: false } };
+
 let gate: ReturnType<typeof createGate> | null = null;
 const priceUsdc = parseFloat(process.env.PRICE_USDC ?? "0.001");
 if (!Number.isFinite(priceUsdc) || priceUsdc <= 0) {
@@ -21,13 +23,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
+  const MAX_REQUEST_BYTES = 256 * 1024;
+  const contentLength = parseInt(req.headers["content-length"] ?? "0", 10);
+  if (contentLength > MAX_REQUEST_BYTES) {
+    res.status(413).json({ error: "request body too large" });
+    return;
+  }
+
   // Convert VercelRequest → Web API Request so handler.ts stays framework-agnostic
   const body = await new Promise<string>((resolve, reject) => {
     let data = "";
-    req.on("data", (chunk) => { data += chunk; });
+    let size = 0;
+    req.on("data", (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > MAX_REQUEST_BYTES) {
+        req.destroy(new Error("request body too large"));
+        return;
+      }
+      data += chunk;
+    });
     req.on("end", () => resolve(data));
     req.on("error", reject);
-  });
+  }).catch(() => null);
+
+  if (body === null) {
+    res.status(413).json({ error: "request body too large" });
+    return;
+  }
 
   const safeBase = process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
