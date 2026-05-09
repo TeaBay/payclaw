@@ -2,6 +2,9 @@
 
 [English](#english) | [繁體中文](#繁體中文)
 
+[![payclaw MCP server](https://glama.ai/mcp/servers/TeaBay/payclaw/badges/score.svg)](https://glama.ai/mcp/servers/TeaBay/payclaw)
+[![PyPI](https://img.shields.io/pypi/v/payclaw)](https://pypi.org/project/payclaw/)
+[![npm](https://img.shields.io/npm/v/payclaw-x402)](https://www.npmjs.com/package/payclaw-x402)
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F01XSFJ0)
 
 ---
@@ -67,7 +70,9 @@ export default { fetch: gate.wrapFetch(async (req) => {
 |---------|---------|------|
 | Python SDK | `pip install payclaw` | [sdk/python](sdk/python/) |
 | JavaScript SDK | `npm install payclaw-x402` | [sdk/js](sdk/js/) |
-| payclaw Search MCP | — | [demo-mcp-server](demo-mcp-server/) |
+| payclaw Search MCP | Live at `payclaw-mcp.vercel.app` | [demo-mcp-server](demo-mcp-server/) |
+
+**payclaw Search MCP** is a production MCP server that charges agents per search query using x402. Use it as a reference implementation or connect directly.
 
 **Live endpoint:** `https://payclaw-mcp.vercel.app/api/mcp`
 
@@ -123,6 +128,9 @@ MIT License. payclaw is infrastructure software only. It is not a payment proces
 
 # payclaw（繁體中文）
 
+[![payclaw MCP server](https://glama.ai/mcp/servers/TeaBay/payclaw/badges/score.svg)](https://glama.ai/mcp/servers/TeaBay/payclaw)
+[![PyPI](https://img.shields.io/pypi/v/payclaw)](https://pypi.org/project/payclaw/)
+[![npm](https://img.shields.io/npm/v/payclaw-x402)](https://www.npmjs.com/package/payclaw-x402)
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F01XSFJ0)
 
 適用於 MCP 伺服器的 x402 支付中介軟體。讓 AI 代理每次工具呼叫使用 Base 鏈上的 USDC 付款 — 10 行程式碼，無需支付處理器，無需 KYC。
@@ -184,9 +192,23 @@ export default { fetch: gate.wrapFetch(async (req) => {
 |------|------|------|
 | Python SDK | `pip install payclaw` | [sdk/python](sdk/python/) |
 | JavaScript SDK | `npm install payclaw-x402` | [sdk/js](sdk/js/) |
-| payclaw Search MCP | — | [demo-mcp-server](demo-mcp-server/) |
+| payclaw Search MCP | 線上於 `payclaw-mcp.vercel.app` | [demo-mcp-server](demo-mcp-server/) |
+
+**payclaw Search MCP** 係一個生產環境 MCP server，每次搜尋查詢向 agent 收取 x402 費用。可作為參考實作或直接連接使用。
 
 **線上端點：** `https://payclaw-mcp.vercel.app/api/mcp`
+
+以 Claude Desktop 連接：
+```json
+{
+  "mcpServers": {
+    "payclaw": {
+      "command": "npx",
+      "args": ["mcp-remote", "https://payclaw-mcp.vercel.app/api/mcp"]
+    }
+  }
+}
+```
 
 ---
 
