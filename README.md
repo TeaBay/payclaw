@@ -4,7 +4,7 @@
 
 [![payclaw MCP server](https://glama.ai/mcp/servers/TeaBay/payclaw/badges/score.svg)](https://glama.ai/mcp/servers/TeaBay/payclaw)
 [![PyPI](https://img.shields.io/pypi/v/payclaw)](https://pypi.org/project/payclaw/)
-[![npm](https://img.shields.io/npm/v/payclaw-x402)](https://www.npmjs.com/package/payclaw-x402)
+[![npm](https://img.shields.io/npm/v/@teapper/payclaw-x402)](https://www.npmjs.com/package/@teapper/payclaw-x402)
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F01XSFJ0)
 
 ---
@@ -39,11 +39,11 @@ async def my_tool(request: Request):
 
 **JavaScript / TypeScript**
 ```bash
-npm install payclaw-x402
+npm install @teapper/payclaw-x402
 ```
 
 ```typescript
-import { requirePayment } from "payclaw-x402";
+import { requirePayment } from "@teapper/payclaw-x402";
 
 const gate = requirePayment({ priceUsdc: 0.001, walletAddress: "0xYourWallet" });
 
@@ -69,7 +69,7 @@ export default { fetch: gate.wrapFetch(async (req) => {
 | Package | Install | Docs |
 |---------|---------|------|
 | Python SDK | `pip install payclaw` | [sdk/python](sdk/python/) |
-| JavaScript SDK | `npm install payclaw-x402` | [sdk/js](sdk/js/) |
+| JavaScript SDK | `npm install @teapper/payclaw-x402` | [sdk/js](sdk/js/) |
 | payclaw Search MCP | Live at `payclaw-mcp.vercel.app` | [demo-mcp-server](demo-mcp-server/) |
 
 **payclaw Search MCP** is a production MCP server that charges agents per search query using x402. Use it as a reference implementation or connect directly.
@@ -130,7 +130,7 @@ MIT License. payclaw is infrastructure software only. It is not a payment proces
 
 [![payclaw MCP server](https://glama.ai/mcp/servers/TeaBay/payclaw/badges/score.svg)](https://glama.ai/mcp/servers/TeaBay/payclaw)
 [![PyPI](https://img.shields.io/pypi/v/payclaw)](https://pypi.org/project/payclaw/)
-[![npm](https://img.shields.io/npm/v/payclaw-x402)](https://www.npmjs.com/package/payclaw-x402)
+[![npm](https://img.shields.io/npm/v/@teapper/payclaw-x402)](https://www.npmjs.com/package/@teapper/payclaw-x402)
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F01XSFJ0)
 
 適用於 MCP 伺服器的 x402 支付中介軟體。讓 AI 代理每次工具呼叫使用 Base 鏈上的 USDC 付款 — 10 行程式碼，無需支付處理器，無需 KYC。
@@ -161,11 +161,11 @@ async def my_tool(request: Request):
 
 **JavaScript / TypeScript**
 ```bash
-npm install payclaw-x402
+npm install @teapper/payclaw-x402
 ```
 
 ```typescript
-import { requirePayment } from "payclaw-x402";
+import { requirePayment } from "@teapper/payclaw-x402";
 
 const gate = requirePayment({ priceUsdc: 0.001, walletAddress: "0x你的錢包" });
 
@@ -191,7 +191,7 @@ export default { fetch: gate.wrapFetch(async (req) => {
 | 套件 | 安裝 | 文件 |
 |------|------|------|
 | Python SDK | `pip install payclaw` | [sdk/python](sdk/python/) |
-| JavaScript SDK | `npm install payclaw-x402` | [sdk/js](sdk/js/) |
+| JavaScript SDK | `npm install @teapper/payclaw-x402` | [sdk/js](sdk/js/) |
 | payclaw Search MCP | 線上於 `payclaw-mcp.vercel.app` | [demo-mcp-server](demo-mcp-server/) |
 
 **payclaw Search MCP** 係一個生產環境 MCP server，每次搜尋查詢向 agent 收取 x402 費用。可作為參考實作或直接連接使用。
