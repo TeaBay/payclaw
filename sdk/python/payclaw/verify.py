@@ -25,28 +25,17 @@ def _rpc(rpc_url: str, method: str, params: list, retries: int = 3):
 
 
 def _decode_address(padded: str) -> str:
-    """Strip 32-byte padding to get 20-byte address."""
     return "0x" + padded[-40:]
 
 
 def verify_payment(tx_hash: str, config, nonce_cache) -> tuple[bool, str]:
-    """
-    Verify a USDC payment on Base chain.
-
-    Checks (in order):
-      1. tx hash not already used (replay protection)
-      2. tx exists on-chain
-      3. tx receipt has a USDC Transfer log to config.wallet_address
-      4. transferred amount >= config.price_units
-      5. block timestamp within freshness window
-      6. atomic nonce mark (race-condition-safe)
-    """
     if nonce_cache.is_used(tx_hash):
         return False, "tx already used"
 
     chain_id_hex = _rpc(config.rpc_url, "eth_chainId", [])
-    if int(chain_id_hex, 16) != config.chain_id:
-        return False, f"chain mismatch: expected {config.chain_id}, got {int(chain_id_hex, 16)}"
+    actual_chain_id = int(chain_id_hex, 16)
+    if actual_chain_id != config.chain_id:
+        return False, f"chain mismatch: expected {config.chain_id}, got {actual_chain_id}"
 
     tx = _rpc(config.rpc_url, "eth_getTransactionByHash", [tx_hash])
     if tx is None:

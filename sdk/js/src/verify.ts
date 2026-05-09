@@ -46,8 +46,9 @@ export async function verifyPayment(txHash: string, config: ResolvedConfig): Pro
 
   // Verify we're on the correct chain to prevent testnet replay attacks
   const chainIdHex = await rpc(config.rpcUrl, "eth_chainId", []) as string;
-  if (Number(BigInt(chainIdHex)) !== config.chainId) {
-    return { ok: false, reason: `chain mismatch: expected ${config.chainId}, got ${Number(BigInt(chainIdHex))}` };
+  const actualChainId = Number(BigInt(chainIdHex));
+  if (actualChainId !== config.chainId) {
+    return { ok: false, reason: `chain mismatch: expected ${config.chainId}, got ${actualChainId}` };
   }
 
   const tx = (await rpc(config.rpcUrl, "eth_getTransactionByHash", [txHash])) as Record<string, string> | null;

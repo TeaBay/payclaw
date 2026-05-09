@@ -5,19 +5,16 @@
   "description": "Demo MCP server showing end-to-end x402 payment flow with payclaw",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy:cf": "wrangler deploy",
-    "deploy:vercel": "vercel deploy --prod",
+    "deploy": "vercel deploy --prod",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.0.0",
     "@types/node": "^20.0.0",
     "@vercel/node": "^5.0.0",
-    "typescript": "^5.0.0",
-    "wrangler": "^3.0.0"
+    "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@upstash/redis": "^1.38.0"
+    "@upstash/redis": "^1.38.0",
+    "undici": "^8.2.0"
   }
 }
