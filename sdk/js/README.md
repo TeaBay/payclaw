@@ -9,7 +9,7 @@
 Drop-in x402 payment middleware for MCP servers. Charge AI agents per tool call using USDC on Base chain — works with Cloudflare Workers, Vercel Edge, Express, and Hono.
 
 ```
-npm install payclaw-x402
+npm install @teapper/payclaw-x402
 ```
 
 ## How it works
@@ -27,7 +27,7 @@ Money flows directly: **agent wallet → your wallet**. payclaw never holds fund
 ## Cloudflare Workers
 
 ```typescript
-import { requirePayment } from "payclaw-x402";
+import { requirePayment } from "@teapper/payclaw-x402";
 
 const gate = requirePayment({
   priceUsdc: 0.001,
@@ -44,7 +44,7 @@ export default {
 ## Vercel Edge / Next.js
 
 ```typescript
-import { requirePayment } from "payclaw-x402";
+import { requirePayment } from "@teapper/payclaw-x402";
 
 export const runtime = "edge";
 
@@ -62,7 +62,7 @@ export default gate.wrapFetch(async (req) => {
 
 ```typescript
 import express from "express";
-import { requirePayment } from "payclaw-x402";
+import { requirePayment } from "@teapper/payclaw-x402";
 
 const app = express();
 
@@ -104,7 +104,7 @@ app.post("/tool", gate, (req, res) => {
 ## Base Mainnet
 
 ```typescript
-import { requirePayment } from "payclaw-x402";
+import { requirePayment } from "@teapper/payclaw-x402";
 
 const gate = requirePayment({
   priceUsdc: 0.001,
@@ -144,8 +144,8 @@ The default nonce store is an **in-memory Map**. This works for single-process d
 **It does NOT protect against replay attacks across multiple worker instances.** Use a shared store for multi-worker deployments:
 
 ```typescript
-import { requirePayment } from "payclaw-x402";
-import type { NonceStore } from "payclaw-x402";
+import { requirePayment } from "@teapper/payclaw-x402";
+import type { NonceStore } from "@teapper/payclaw-x402";
 
 // Cloudflare Workers KV adapter
 function createKVNonceStore(kv: KVNamespace): NonceStore {
@@ -203,7 +203,7 @@ payclaw is infrastructure software only. It is not a payment processor, money tr
 適用於 MCP 伺服器的 x402 支付中介軟體。讓 AI 代理每次工具呼叫使用 Base 鏈上的 USDC 付款 — 支援 Cloudflare Workers、Vercel Edge、Express 及 Hono。
 
 ```
-npm install payclaw-x402
+npm install @teapper/payclaw-x402
 ```
 
 ## 運作原理
@@ -221,7 +221,7 @@ npm install payclaw-x402
 ## Cloudflare Workers
 
 ```typescript
-import { requirePayment } from "payclaw-x402";
+import { requirePayment } from "@teapper/payclaw-x402";
 
 const gate = requirePayment({
   priceUsdc: 0.001,
@@ -238,7 +238,7 @@ export default {
 ## Vercel Edge / Next.js
 
 ```typescript
-import { requirePayment } from "payclaw-x402";
+import { requirePayment } from "@teapper/payclaw-x402";
 
 export const runtime = "edge";
 
@@ -256,7 +256,7 @@ export default gate.wrapFetch(async (req) => {
 
 ```typescript
 import express from "express";
-import { requirePayment } from "payclaw-x402";
+import { requirePayment } from "@teapper/payclaw-x402";
 
 const app = express();
 
@@ -298,7 +298,7 @@ app.post("/tool", gate, (req, res) => {
 ## Base 主網
 
 ```typescript
-import { requirePayment } from "payclaw-x402";
+import { requirePayment } from "@teapper/payclaw-x402";
 
 const gate = requirePayment({
   priceUsdc: 0.001,
@@ -338,8 +338,8 @@ const gate = requirePayment({
 **多 Worker 實例無法防止重放攻擊。** 多 Worker 部署請使用共用儲存：
 
 ```typescript
-import { requirePayment } from "payclaw-x402";
-import type { NonceStore } from "payclaw-x402";
+import { requirePayment } from "@teapper/payclaw-x402";
+import type { NonceStore } from "@teapper/payclaw-x402";
 
 // Cloudflare Workers KV 適配器
 function createKVNonceStore(kv: KVNamespace): NonceStore {

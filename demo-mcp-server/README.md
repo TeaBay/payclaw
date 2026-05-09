@@ -1,4 +1,4 @@
-# payclaw Search MCP Server
+# payclaw Proxy MCP Server
 
 [English](#english) | [繁體中文](#繁體中文)
 
@@ -28,7 +28,7 @@ Install [mcp-remote](https://github.com/geelen/mcp-remote), then add to your Cla
 ```json
 {
   "mcpServers": {
-    "payclaw-search": {
+    "payclaw": {
       "command": "npx",
       "args": ["mcp-remote", "https://payclaw-mcp.vercel.app/api/mcp"]
     }
@@ -36,7 +36,7 @@ Install [mcp-remote](https://github.com/geelen/mcp-remote), then add to your Cla
 }
 ```
 
-Restart Claude Desktop. The `search_knowledge` tool will appear.
+Restart Claude Desktop. The `proxy_request` tool will appear.
 
 ---
 
@@ -47,7 +47,7 @@ Add to `.cursor/mcp.json` in your project:
 ```json
 {
   "mcpServers": {
-    "payclaw-search": {
+    "payclaw": {
       "command": "npx",
       "args": ["mcp-remote", "https://payclaw-mcp.vercel.app/api/mcp"]
     }
@@ -59,11 +59,11 @@ Add to `.cursor/mcp.json` in your project:
 
 ## How payment works
 
-1. Agent calls `search_knowledge`
+1. Agent calls `proxy_request`
 2. Server returns **HTTP 402** with payment details
 3. Agent pays 0.001 USDC on Base Mainnet → gets tx hash
 4. Agent retries with `X-Payment: <tx_hash>` header
-5. Server verifies on-chain → returns result
+5. Server verifies on-chain → forwards request and returns result
 
 You need real USDC on Base Mainnet. Buy USDC on [Coinbase](https://coinbase.com) or any exchange and send to Base network.
 
@@ -73,7 +73,7 @@ You need real USDC on Base Mainnet. Buy USDC on [Coinbase](https://coinbase.com)
 
 | Tool | Cost | Description |
 |------|------|-------------|
-| `search_knowledge` | 0.001 USDC | Search the knowledge base |
+| `proxy_request` | 0.001 USDC | Forward an HTTP request to any HTTPS API |
 
 ---
 
@@ -82,7 +82,7 @@ You need real USDC on Base Mainnet. Buy USDC on [Coinbase](https://coinbase.com)
 Want to add x402 payments to your own MCP server? Use the payclaw SDK:
 
 - **Python:** `pip install payclaw` → [docs](https://pypi.org/project/payclaw/)
-- **JavaScript:** `npm install payclaw-x402`
+- **JavaScript:** `npm install @teapper/payclaw-x402`
 
 ---
 
@@ -94,7 +94,7 @@ Want to add x402 payments to your own MCP server? Use the payclaw SDK:
 
 <a name="繁體中文"></a>
 
-# payclaw Search MCP 伺服器（繁體中文）
+# payclaw Proxy MCP 伺服器（繁體中文）
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F01XSFJ0)
 
@@ -118,7 +118,7 @@ Want to add x402 payments to your own MCP server? Use the payclaw SDK:
 ```json
 {
   "mcpServers": {
-    "payclaw-search": {
+    "payclaw": {
       "command": "npx",
       "args": ["mcp-remote", "https://payclaw-mcp.vercel.app/api/mcp"]
     }
@@ -126,7 +126,7 @@ Want to add x402 payments to your own MCP server? Use the payclaw SDK:
 }
 ```
 
-重啟 Claude Desktop，`search_knowledge` 工具即可使用。
+重啟 Claude Desktop，`proxy_request` 工具即可使用。
 
 ---
 
@@ -137,7 +137,7 @@ Want to add x402 payments to your own MCP server? Use the payclaw SDK:
 ```json
 {
   "mcpServers": {
-    "payclaw-search": {
+    "payclaw": {
       "command": "npx",
       "args": ["mcp-remote", "https://payclaw-mcp.vercel.app/api/mcp"]
     }
@@ -149,11 +149,11 @@ Want to add x402 payments to your own MCP server? Use the payclaw SDK:
 
 ## 付款流程
 
-1. Agent 呼叫 `search_knowledge`
+1. Agent 呼叫 `proxy_request`
 2. 伺服器返回 **HTTP 402**，附上付款資訊
 3. Agent 在 Base Mainnet 支付 0.001 USDC → 取得 tx hash
 4. Agent 帶上 `X-Payment: <tx_hash>` header 重試
-5. 伺服器在鏈上驗證 → 返回結果
+5. 伺服器在鏈上驗證 → 轉發請求並返回結果
 
 需要 Base Mainnet 上的真實 USDC。可在 [Coinbase](https://coinbase.com) 或其他交易所購買 USDC 並發送至 Base 網路。
 
@@ -163,7 +163,7 @@ Want to add x402 payments to your own MCP server? Use the payclaw SDK:
 
 | 工具 | 費用 | 說明 |
 |------|------|------|
-| `search_knowledge` | 0.001 USDC | 搜尋知識庫 |
+| `proxy_request` | 0.001 USDC | 轉發 HTTP 請求至任意 HTTPS API |
 
 ---
 
@@ -172,7 +172,7 @@ Want to add x402 payments to your own MCP server? Use the payclaw SDK:
 想在自己的 MCP 伺服器加入 x402 付款？使用 payclaw SDK：
 
 - **Python：** `pip install payclaw` → [文件](https://pypi.org/project/payclaw/)
-- **JavaScript：** `npm install payclaw-x402`
+- **JavaScript：** `npm install @teapper/payclaw-x402`
 
 ---
 
